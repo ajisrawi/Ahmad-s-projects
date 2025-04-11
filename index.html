@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Signal Lab - RF Signal Analysis and Education</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-gray-900 text-white">
+    <div class="container mx-auto p-4">
+        <header class="mb-8">
+            <h1 class="text-4xl font-bold text-center text-blue-400">Live Signal Lab</h1>
+            <p class="text-center text-gray-400">RF Signal Analysis & Education Platform</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-4">
+            <!-- Control Panel -->
+            <div class="w-full md:w-1/4 bg-gray-800 p-4 rounded-lg shadow-lg">
+                <h2 class="text-xl font-bold mb-4 text-blue-300">Signal Controls</h2>
+                
+                <!-- Signal Type -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Modulation Type</label>
+                    <select id="modulation-type" class="w-full bg-gray-700 text-white rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="am">AM (Amplitude Modulation)</option>
+                        <option value="fm">FM (Frequency Modulation)</option>
+                        <option value="bpsk">BPSK (Binary Phase Shift Keying)</option>
+                        <option value="qpsk">QPSK (Quadrature Phase Shift Keying)</option>
+                        <option value="fsk">FSK (Frequency Shift Keying)</option>
+                        <option value="lsb">LSB (Lower Sideband)</option>
+                        <option value="usb">USB (Upper Sideband)</option>
+                        <option value="ssb">SSB (Single Sideband)</option>
+                    </select>
+                </div>
+                
+                <!-- Carrier Frequency -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Carrier Frequency (Hz)</label>
+                    <input type="number" id="carrier-frequency" value="1000" min="1" max="10000" class="w-full bg-gray-700 text-white rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- Symbol Rate -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Symbol Rate (Baud)</label>
+                    <input type="number" id="symbol-rate" value="100" min="1" max="1000" class="w-full bg-gray-700 text-white rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- SNR -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">SNR (dB)</label>
+                    <input type="range" id="snr" min="0" max="30" value="20" class="w-full">
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>0 dB</span>
+                        <span id="snr-value">20 dB</span>
+                        <span>30 dB</span>
+                    </div>
+                </div>
+                
+                <!-- Modulation Index (for AM/FM) -->
+                <div class="mb-4 modulation-specific am-controls fm-controls">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Modulation Index</label>
+                    <input type="range" id="modulation-index" min="0" max="100" value="50" class="w-full">
+                    <div class="flex justify-between text-xs text-gray-400">
+                        <span>0%</span>
+                        <span id="modulation-index-value">50%</span>
+                        <span>100%</span>
+                    </div>
+                </div>
+                
+                <!-- Message Frequency (for AM/FM) -->
+                <div class="mb-4 modulation-specific am-controls fm-controls">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Message Frequency (Hz)</label>
+                    <input type="number" id="message-frequency" value="100" min="1" max="1000" class="w-full bg-gray-700 text-white rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <!-- FSK Deviation (for FSK) -->
+                <div class="mb-4 modulation-specific fsk-controls" style="display: none;">
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Frequency Deviation (Hz)</label>
+                    <input type="number" id="frequency-deviation" value="100" min="1" max="1000" class="w-full bg-gray-700 text-white rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                
+                <button id="generate-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                    Generate Signal
+                </button>
+            </div>
+
+            <!-- Visualization Section -->
+            <div class="w-full md:w-3/4 bg-gray-800 p-4 rounded-lg shadow-lg">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Time Domain Plot -->
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">Time Domain</h3>
+                        <div class="chart-container" style="position: relative; height: 200px;">
+                            <canvas id="time-domain-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Frequency Domain Plot (FFT) -->
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">Frequency Spectrum (FFT)</h3>
+                        <div class="chart-container" style="position: relative; height: 200px;">
+                            <canvas id="frequency-domain-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Constellation Diagram (for digital modulations) -->
+                    <div class="bg-gray-700 p-4 rounded-lg digital-modulation">
+                        <h3 class="text-lg font-semibold mb-2">Constellation Diagram</h3>
+                        <div class="chart-container" style="position: relative; height: 200px;">
+                            <canvas id="constellation-chart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Waterfall Spectrogram -->
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h3 class="text-lg font-semibold mb-2">Waterfall Spectrogram</h3>
+                        <div class="chart-container" style="position: relative; height: 200px;">
+                            <canvas id="waterfall-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Analysis Section -->
+                <div class="mt-4 bg-gray-700 p-4 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-2">Signal Analysis</h3>
+                    <div id="analysis-results" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-gray-800 p-3 rounded">
+                            <h4 class="text-sm font-medium text-gray-400">Signal Type</h4>
+                            <p id="signal-type-result" class="text-lg font-bold">--</p>
+                        </div>
+                        <div class="bg-gray-800 p-3 rounded">
+                            <h4 class="text-sm font-medium text-gray-400">Estimated Bandwidth</h4>
+                            <p id="bandwidth-result" class="text-lg font-bold">--</p>
+                        </div>
+                        <div class="bg-gray-800 p-3 rounded">
+                            <h4 class="text-sm font-medium text-gray-400">Measured SNR</h4>
+                            <p id="snr-result" class="text-lg font-bold">--</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 bg-gray-800 p-3 rounded">
+                        <h4 class="text-sm font-medium text-gray-400">Educational Insights</h4>
+                        <p id="educational-insights" class="mt-2"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/signalGenerator.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="js/analysis.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
