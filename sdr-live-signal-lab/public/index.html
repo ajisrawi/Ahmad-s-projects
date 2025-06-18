@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDR Live Signal Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+</head>
+<body class="h-screen flex flex-col">
+  <div class="flex flex-1">
+    <div id="controls" class="w-1/4 p-4 overflow-y-auto border-r">
+      <h1 class="text-xl font-bold mb-4">Signal Controls</h1>
+      <form id="signalForm" class="space-y-2">
+        <label class="block">Carrier Frequency (Hz)<input id="freq" type="number" class="w-full border" value="10000"></label>
+        <label class="block">Symbol Rate<input id="rate" type="number" class="w-full border" value="1000"></label>
+        <label class="block">SNR (dB)<input id="snr" type="number" class="w-full border" value="30"></label>
+        <label class="block">Modulation<select id="mod" class="w-full border"><option>AM</option><option>FM</option><option>BPSK</option><option>QPSK</option><option>FSK</option></select></label>
+        <label class="block">Audio File<input id="audioFile" type="file" accept="audio/*" class="w-full"></label>
+        <button type="submit" class="mt-2 px-2 py-1 bg-blue-500 text-white">Generate</button>
+      </form>
+      <div class="mt-4">
+        <label><input type="checkbox" id="hardwareToggle"> Connect Real SDR</label>
+      </div>
+    </div>
+    <div id="plots" class="flex-1 p-4 space-y-4 overflow-y-auto">
+      <div id="timePlot"></div>
+      <div id="fftPlot"></div>
+      <div id="waterfall" class="h-48"></div>
+    </div>
+    <div id="analysis" class="w-1/4 p-4 overflow-y-auto border-l">
+      <h2 class="text-xl font-bold mb-4">AI Analysis</h2>
+      <pre id="analysisOutput" class="whitespace-pre-wrap"></pre>
+    </div>
+  </div>
+  <audio id="audioPlayback" controls class="w-full"></audio>
+  <script src="script.js"></script>
+</body>
+</html>
